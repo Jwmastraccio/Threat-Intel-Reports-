@@ -1,2 +1,36 @@
 # Threat-Intel-Reports-
-Portfolio of threat intelligence reports, IOC data, and MITRE ATT&amp;CK mapping.
+This repository contains a portfolio of **threat intelligence reports created as part of my cybersecurity work and study. Each report is structured like a dprofessional intelligence product, including:
+**Executive summary**
+**threat Actor Background**
+**Campaign Analysis**
+**MITRE ATT&CK Mapping**
+**Indicators of Compromise (IOCs)**
+**Defensive Recommendations**
+
+The reports demonstrate my ability to:
+-Analyze cyber threat campaigns using open-source intelligence (OSINT)
+-Map attackers TTPs to MITRE ATT&CK
+-Document and organizeIOCs in a format suitable for SIEM/EDR ingestion
+-Communicate findings in both technical and non-technical language
+
+## Reports
+
+- **[Kimsuky Deepfake Military ID Campain](./Kimsuky_Deepfake_MilitaryID/Report.md)**
+- Adversary: Kimsuky (North Korea-linked APT)
+- tactics: AI-generated deepfake ID's spear-phishing, obfuscated malware
+- Targeted Industry: South Korean defense and government
+- Key MITRE ATT&CK IDs: T1566 (Phishing), T1027 (Obfuscation), T1059.001 (PowerShell)
+
+---
+
+##  IOC Data
+
+Indicators of Compromise (IOCs) for each campaign are available in CSV format foreasy ingestion into SIEM/EDR tools
+- Fields include: Type, Value,Description, First Seen, Source
+
+Example:
+| Type | Value | Description | First Seen | Source |
+| IPv4 | 183.111.174.34 | C2 server | 2025-09-15 | AlienVault OTX
+| FileHash-MD5 | 09dabe5ab566e50ab4526504345af297 | Malware sample | 2025-09-15 | AlienVault OTX |
+| Domain | example-malicious.com | Malicious domain | 2025-09-15 | AlienVault OTX |
+
