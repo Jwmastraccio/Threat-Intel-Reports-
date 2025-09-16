@@ -1,5 +1,5 @@
 # Threat-Intel-Reports-
-This repository contains a portfolio of **threat intelligence reports created as part of my cybersecurity work and study. Each report is structured like a dprofessional intelligence product, including:
+This repository contains a portfolio of **threat intelligence reports created as part of my cybersecurity work and study. Each report is structured like a professional intelligence product, including:
 **Executive summary**
 **threat Actor Background**
 **Campaign Analysis**
@@ -15,7 +15,7 @@ The reports demonstrate my ability to:
 
 ## Reports
 
-- **[Kimsuky Deepfake Military ID Campain](./Kimsuky_Deepfake_MilitaryID/Report.md)**
+- **[Kimsuky Deepfake Military ID Campaign](./Kimsuky_Deepfake_MilitaryID/Report.md)**
 - Adversary: Kimsuky (North Korea-linked APT)
 - tactics: AI-generated deepfake ID's spear-phishing, obfuscated malware
 - Targeted Industry: South Korean defense and government
@@ -25,8 +25,8 @@ The reports demonstrate my ability to:
 
 ##  IOC Data
 
-Indicators of Compromise (IOCs) for each campaign are available in CSV format foreasy ingestion into SIEM/EDR tools
-- Fields include: Type, Value,Description, First Seen, Source
+Indicators of Compromise (IOCs) for each campaign are available in CSV format for easy ingestion into SIEM/EDR tools
+- Fields include: Type, Value, Description, First Seen, Source
 
 Example:
 | Type | Value | Description | First Seen | Source |
