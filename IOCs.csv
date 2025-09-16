@@ -1,1 +1,8 @@
 
+Indicator_Type,Indicator_Value,Description,Source,Status
+Email,redacted_user1@example[.]com,Compromised email from 500px breach,Dark Web Leak,Confirmed
+Email,redacted_user2@example[.]net,Credential exposed in Dubsmash dataset,Dark Web Leak,Confirmed
+Domain,login-secure[.]xyz,Phishing domain imitating MyFitnessPal login,Open Source,Malicious
+IP,185.220.101[.]45,Tor exit node observed in credential stuffing attempts,AbuseIPDB,Malicious
+Hash,5f4dcc3b5aa765d61d8327deb882cf99,MD5 hash of weak password “password”,Reference,Known Weak
+Domain,account-verification[.]support,Spoofed domain used in phishing tied to breach,Open Source,Suspicious
