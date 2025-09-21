@@ -1,1 +1,60 @@
+#!/usr/bin/env python3
+"""
+IOC Enrichment Script
+Author: Joseph Mastraccio
+Description: Takes IOCs from a CSV and enriches them with OSINT sources (VirusTotal, AlienVault OTX, etc.)
+Note: Requires API keys for live enrichment. This script uses dummy enrichment for demo purposes.
+"""
 
+import csv
+import requests
+import sys
+
+# Example: add your API keys here if you want live lookups
+VT_API_KEY = "YOUR_VIRUSTOTAL_API_KEY"
+OTX_API_KEY = "YOUR_ALIENVAULT_API_KEY"
+
+INPUT_FILE = "IOCs.csv"
+OUTPUT_FILE = "IOCs_enriched.csv"
+
+
+def vt_enrich(ioc_value):
+    """Fake VirusTotal lookup (replace with live API if keys available)."""
+    return {
+        "positives": 12,
+        "total": 70,
+        "malware_family": "KimsukyLoader"
+    }
+
+
+def enrich_iocs():
+    enriched_rows = []
+
+    with open(INPUT_FILE, "r") as infile:
+        reader = csv.DictReader(infile)
+        for row in reader:
+            ioc_value = row["Value"]
+            vt_data = vt_enrich(ioc_value)
+
+            row["VT_Positives"] = vt_data["positives"]
+            row["VT_Total"] = vt_data["total"]
+            row["Malware_Family"] = vt_data["malware_family"]
+
+            enriched_rows.append(row)
+
+    # Write enriched output
+    with open(OUTPUT_FILE, "w", newline="") as outfile:
+        fieldnames = enriched_rows[0].keys()
+        writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(enriched_rows)
+
+    print(f"[+] Enrichment complete. Results saved to {OUTPUT_FILE}")
+
+
+if __name__ == "__main__":
+    try:
+        enrich_iocs()
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
