@@ -4,66 +4,43 @@
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
 ![Status](https://img.shields.io/badge/Status-Active-green)
 
-This repository contains a portfolio of **threat intelligence reports** created as part of my cybersecurity work and study. Each report is structured like a professional intelligence product and includes:
+# Threat Intelligence Reports Portfolio
 
-- **Executive Summary**  
-- **Threat Actor Background**  
-- **Campaign Analysis**  
-- **MITRE ATT&CK Mapping**  
-- **Indicators of Compromise (IOCs)**  
-- **Defensive Recommendations**  
+A collection of threat intel write-ups, IOC collections, and MITRE ATT&CK mappings I put together while learning and doing hands-on analysis. Each report is written like a real-world intelligence product and includes:
 
-The reports demonstrate my ability to:  
+- Executive summary  
+- Threat actor background  
+- Campaign analysis  
+- MITRE ATT&CK mapping  
+- Indicators of Compromise (IOCs)  
+- Defensive recommendations
 
-- Analyze cyber threat campaigns using open-source intelligence (OSINT)  
-- Map attacker TTPs to **MITRE ATT&CK**  
-- Document and organize IOCs in a format suitable for SIEM/EDR ingestion  
-- Communicate findings in both technical and non-technical language  
-
----
-
-## Reports
-
-### [Kimsuky Deepfake Military ID Campaign](./Kimsuky_Deepfake_MilitaryID/Report.md)  
-- **Adversary:** Kimsuky (North Korea-linked APT)  
-- **Tactics:** AI-generated deepfake IDs, spear-phishing, obfuscated malware  
-- **Targeted Industry:** South Korean defense and government  
-- **Key MITRE ATT&CK IDs:**  
-  - T1566 – Phishing  
-  - T1027 – Obfuscation  
-  - T1059.001 – PowerShell  
+This repo shows how I:
+- Pull OSINT to analyze campaigns
+- Map attacker TTPs to MITRE ATT&CK
+- Package IOCs so they can be dropped into a SIEM/EDR
+- Explain technical findings in plain English for stakeholders
 
 ---
 
-## IOC Data
-
-Indicators of Compromise (IOCs) for each campaign are available in **CSV format** for easy ingestion into SIEM/EDR tools.  
-**Fields include:** Type, Value, Description, First Seen, Source  
-
-**Example:**
-
-| Type          | Value                       | Description      | First Seen  | Source          |
-|---------------|----------------------------|----------------|------------|----------------|
-| IPv4          | 183.111.174.34             | C2 server       | 2025-09-15 | AlienVault OTX |
-| FileHash-MD5  | 09dabe5ab566e50ab4526504345af297 | Malware sample | 2025-09-15 | AlienVault OTX |
-| Domain        | example-malicious.com       | Malicious domain| 2025-09-15 | AlienVault OTX |
+## Quick links
+- Kimsuky Deepfake Military ID Campaign — `./Kimsuky_Deepfake_MilitaryID/Report.md`
 
 ---
 
-## Tools & Technologies Demonstrated
+## Example IOC table
 
-- **Network Analysis:** Suricata, Wireshark, PCAP analysis  
-- **SIEM / Log Analysis:** Splunk (labs), log parsing  
-- **Scripting / Automation:** Python, Bash  
-- **Threat Modeling:** MITRE ATT&CK mapping  
+IOCs are stored as CSVs for easy ingestion. Typical fields: Type, Value, Description, First Seen, Source.
+
+| Type         | Value                                  | Description      | First Seen  | Source          |
+|--------------|----------------------------------------|------------------|-------------|-----------------|
+| IPv4         | 183.111.174.34                         | C2 server        | 2025-09-15  | AlienVault OTX  |
+| FileHash-MD5 | 09dabe5ab566e50ab4526504345af297       | Malware sample   | 2025-09-15  | AlienVault OTX  |
+| Domain       | example-malicious.com                  | Malicious domain | 2025-09-15  | AlienVault OTX  |
 
 ---
 
-## Author
-
-**Joseph Mastraccio**  
-Entry-Level Cybersecurity Professional | [GitHub](https://github.com/Jwmastraccio)  
-Email: jwmastraccio@gmail.com  
+## What’s in this repo
 
 ---
 
