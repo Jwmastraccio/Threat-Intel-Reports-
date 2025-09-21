@@ -1,60 +1,130 @@
 #!/usr/bin/env python3
 """
-IOC Enrichment Script
-Author: Joseph Mastraccio
-Description: Takes IOCs from a CSV and enriches them with OSINT sources (VirusTotal, AlienVault OTX, etc.)
-Note: Requires API keys for live enrichment. This script uses dummy enrichment for demo purposes.
+IOC enrichment helper
+
+What this does
+- Reads IOCs from IOCs.csv
+- Hits VirusTotal and AlienVault OTX to pull basic enrichment fields
+- Writes results to IOCs_enriched.csv
+
+Notes
+- You need to add your API keys below.
+- Install dependencies with: pip install requests
+- This is meant to be easy to run locally for quick context about IOCs.
 """
 
 import csv
 import requests
+import time
 import sys
 
-# Example: add your API keys here if you want live lookups
-VT_API_KEY = "YOUR_VIRUSTOTAL_API_KEY"
-OTX_API_KEY = "YOUR_ALIENVAULT_API_KEY"
-
+# ---------- config ----------
 INPUT_FILE = "IOCs.csv"
 OUTPUT_FILE = "IOCs_enriched.csv"
 
+# Put your API keys here (replace the placeholders)
+VT_API_KEY = "YOUR_VIRUSTOTAL_API_KEY"
+OTX_API_KEY = "YOUR_ALIENVAULT_OTX_API_KEY"
 
-def vt_enrich(ioc_value):
-    """Fake VirusTotal lookup (replace with live API if keys available)."""
-    return {
-        "positives": 12,
-        "total": 70,
-        "malware_family": "KimsukyLoader"
+VT_URL = "https://www.virustotal.com/api/v3"
+OTX_URL = "https://otx.alienvault.com/api/v1/indicators"
+# ----------------------------
+
+def vt_enrich(ioc_type, ioc):
+    """Basic VirusTotal enrichment. Returns a dict (may be empty)."""
+    headers = {"x-apikey": VT_API_KEY}
+    endpoints = {
+        "Domain": f"/domains/{ioc}",
+        "IPv4": f"/ip_addresses/{ioc}",
+        "FileHash-MD5": f"/files/{ioc}",
+        "FileHash-SHA1": f"/files/{ioc}",
+        "FileHash-SHA256": f"/files/{ioc}",
     }
 
+    if ioc_type not in endpoints:
+        return {}
 
-def enrich_iocs():
-    enriched_rows = []
+    try:
+        r = requests.get(VT_URL + endpoints[ioc_type], headers=headers, timeout=15)
+        if r.status_code != 200:
+            return {}
+        data = r.json().get("data", {}).get("attributes", {})
+        stats = data.get("last_analysis_stats", {})
+        fam = data.get("popular_threat_classification", {}).get("suggested_threat_label", "N/A")
+        return {
+            "vt_harmless": stats.get("harmless", 0),
+            "vt_malicious": stats.get("malicious", 0),
+            "vt_suspicious": stats.get("suspicious", 0),
+            "vt_family": fam
+        }
+    except Exception:
+        return {}
 
-    with open(INPUT_FILE, "r") as infile:
-        reader = csv.DictReader(infile)
-        for row in reader:
-            ioc_value = row["Value"]
-            vt_data = vt_enrich(ioc_value)
+def otx_enrich(ioc_type, ioc):
+    """Basic AlienVault OTX enrichment. Returns a dict (may be empty)."""
+    headers = {"X-OTX-API-KEY": OTX_API_KEY}
+    endpoints = {
+        "Domain": f"/domain/{ioc}/general",
+        "IPv4": f"/IPv4/{ioc}/general",
+        "FileHash-MD5": f"/file/{ioc}/general",
+        "FileHash-SHA1": f"/file/{ioc}/general",
+        "FileHash-SHA256": f"/file/{ioc}/general",
+    }
 
-            row["VT_Positives"] = vt_data["positives"]
-            row["VT_Total"] = vt_data["total"]
-            row["Malware_Family"] = vt_data["malware_family"]
+    if ioc_type not in endpoints:
+        return {}
 
-            enriched_rows.append(row)
+    try:
+        r = requests.get(OTX_URL + endpoints[ioc_type], headers=headers, timeout=15)
+        if r.status_code != 200:
+            return {}
+        data = r.json()
+        pulses = data.get("pulse_info", {}).get("pulses", [])
+        base = data.get("base_indicator", {}) or {}
+        return {
+            "otx_pulse_count": len(pulses),
+            "otx_first_seen": base.get("created", "N/A"),
+            "otx_tags": ",".join(base.get("tags", []))
+        }
+    except Exception:
+        return {}
 
-    # Write enriched output
-    with open(OUTPUT_FILE, "w", newline="") as outfile:
-        fieldnames = enriched_rows[0].keys()
-        writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+def enrich():
+    rows = []
+    try:
+        with open(INPUT_FILE, newline="") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                ioc_type = r.get("Type")
+                ioc_value = r.get("Value")
+                if not (ioc_type and ioc_value):
+                    continue
+
+                vt = vt_enrich(ioc_type, ioc_value)
+                otx = otx_enrich(ioc_type, ioc_value)
+
+                merged = {**r, **vt, **otx}
+                rows.append(merged)
+
+                print(f"Enriched: {ioc_type} {ioc_value}")
+                time.sleep(1)  # simple rate-limit friendly pause
+    except FileNotFoundError:
+        print(f"Could not find {INPUT_FILE}. Put your CSV in the repo root or update INPUT_FILE.")
+        sys.exit(1)
+
+    if not rows:
+        print("No IOCs processed. Exiting.")
+        sys.exit(0)
+
+    with open(OUTPUT_FILE, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
         writer.writeheader()
-        writer.writerows(enriched_rows)
+        writer.writerows(rows)
 
-    print(f"[+] Enrichment complete. Results saved to {OUTPUT_FILE}")
-
+    print(f"Done — results in {OUTPUT_FILE}")
 
 if __name__ == "__main__":
-    try:
-        enrich_iocs()
-    except Exception as e:
-        print(f"Error: {e}")
+    if VT_API_KEY.startswith("YOUR_") or OTX_API_KEY.startswith("YOUR_"):
+        print("Please edit this script and add your VirusTotal and AlienVault OTX API keys.")
         sys.exit(1)
+    enrich()
