@@ -1,5 +1,9 @@
 # Threat Intelligence Reports Portfolio
 
+![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red)
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![Status](https://img.shields.io/badge/Status-Active-green)
+
 This repository contains a portfolio of **threat intelligence reports** created as part of my cybersecurity work and study. Each report is structured like a professional intelligence product and includes:
 
 - **Executive Summary**  
