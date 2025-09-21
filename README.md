@@ -38,10 +38,21 @@ IOCs are stored as CSVs for easy ingestion. Typical fields: Type, Value, Descrip
 | FileHash-MD5 | 09dabe5ab566e50ab4526504345af297       | Malware sample   | 2025-09-15  | AlienVault OTX  |
 | Domain       | example-malicious.com                  | Malicious domain | 2025-09-15  | AlienVault OTX  |
 
----
-
-## What’s in this repo
 
 ---
 
-*This portfolio is intended for educational and professional demonstration purposes.*
+## Tools / tech demonstrated
+- Suricata, Wireshark, PCAP analysis  
+- Splunk (labs), log parsing  
+- Python & Bash scripting  
+- MITRE ATT&CK mapping and detection guidance
+
+---
+
+## About me
+**Joseph Mastraccio** — entry-level cybersecurity practitioner focused on threat hunting and analysis.  
+GitHub: https://github.com/Jwmastraccio | jwmastraccio@gmail.com
+
+---
+
+This project is for learning and portfolio use.
