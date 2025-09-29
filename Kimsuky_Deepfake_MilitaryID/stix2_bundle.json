@@ -1,0 +1,343 @@
+#!/usr/bin/env python3
+"""
+csv_to_stix.py
+Convert a campaign-scoped iocs.csv to a STIX 2.1 bundle (JSON).
+
+Expected CSV headers (lowercase):
+  type,value,first_seen,last_seen,tlp,source,context,confidence
+
+Supported 'type' values (case-insensitive):
+  domain, ipv4, url, filehash-md5, filehash-sha1, filehash-sha256
+
+Usage:
+  python tools/csv_to_stix.py \
+    --csv Kimsuky_Deepfake_MilitaryID/iocs.csv \
+    --out Kimsuky_Deepfake_MilitaryID/stix2_bundle.json \
+    --group "Kimsuky" \
+    --campaign "Deepfake Military ID (2025)" \
+    --threat-id intrusion-set--6e6b2e5d-2c40-4d3e-b8b1-3e3a4cd2f9ab
+"""
+
+import argparse
+import csv
+import datetime as dt
+import json
+import sys
+import uuid
+from pathlib import Path
+
+
+SUPPORTED_TYPES = {
+    "domain",
+    "ipv4",
+    "url",
+    "filehash-md5",
+    "filehash-sha1",
+    "filehash-sha256",
+}
+
+# Map CSV 'confidence' strings to STIX integer confidence (0-100)
+CONF_MAP = {"low": 15, "medium": 50, "med": 50, "high": 80, "very high": 90}
+
+# TLP → STIX 2.1 marking-definition objects (IDs are stable constants)
+TLP_DEFS = {
+    "TLP:CLEAR": {
+        "id": "marking-definition--613f2e26-407d-48c7-9eca-b8e91df99dc9",  # TLP:WHITE
+        "definition_type": "tlp",
+        "definition": {"tlp": "white"},
+    },
+    "TLP:WHITE": {
+        "id": "marking-definition--613f2e26-407d-48c7-9eca-b8e91df99dc9",
+        "definition_type": "tlp",
+        "definition": {"tlp": "white"},
+    },
+    "TLP:GREEN": {
+        "id": "marking-definition--34098fce-860f-48ae-8e50-ebd3cc5e41da",
+        "definition_type": "tlp",
+        "definition": {"tlp": "green"},
+    },
+    "TLP:AMBER": {
+        "id": "marking-definition--f88d31f6-486f-44da-b317-01333bde0b82",
+        "definition_type": "tlp",
+        "definition": {"tlp": "amber"},
+    },
+    "TLP:RED": {
+        "id": "marking-definition--5e57c739-391a-4eb3-b6b6-2ac8d3b9d16d",
+        "definition_type": "tlp",
+        "definition": {"tlp": "red"},
+    },
+}
+
+REQUIRED_HEADERS = [
+    "type",
+    "value",
+    "first_seen",
+    "last_seen",
+    "tlp",
+    "source",
+    "context",
+    "confidence",
+]
+
+
+def utc_now() -> str:
+    return dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def to_iso_date(d: str | None) -> str | None:
+    if not d:
+        return None
+    d = d.strip()
+    if not d:
+        return None
+    # Accept YYYY-MM, YYYY-MM-DD; coerce to midnight Z
+    try:
+        if len(d) == 7:  # YYYY-MM
+            _ = dt.datetime.strptime(d, "%Y-%m")
+            return f"{d}-01T00:00:00Z"
+        elif len(d) == 10:  # YYYY-MM-DD
+            _ = dt.datetime.strptime(d, "%Y-%m-%d")
+            return f"{d}T00:00:00Z"
+        else:
+            # Try full datetime passthrough if user already provided Z
+            if d.endswith("Z"):
+                dt.datetime.fromisoformat(d.replace("Z", "+00:00"))
+                return d
+            # Last resort: parse flexible and coerce to Z
+            parsed = dt.datetime.fromisoformat(d)
+            return parsed.strftime("%Y-%m-%dT%H:%M:%SZ")
+    except Exception:
+        # Keep None if unparseable
+        return None
+
+
+def stix_pattern(ioc_type: str, value: str) -> str | None:
+    t = ioc_type.lower().strip()
+    v = value.strip()
+    if t == "domain":
+        return f"[domain-name:value = '{v}']"
+    if t == "ipv4":
+        return f"[ipv4-addr:value = '{v}']"
+    if t == "url":
+        return f"[url:value = '{v}']"
+    if t.startswith("filehash-"):
+        algo = t.split("-", 1)[1]
+        return f"[file:hashes.'{algo}' = '{v}']"
+    return None
+
+
+def make_marking_definition(tlp_key: str) -> dict | None:
+    key = tlp_key.upper()
+    if key in TLP_DEFS:
+        base = TLP_DEFS[key]
+        return {
+            "type": "marking-definition",
+            "spec_version": "2.1",
+            "id": base["id"],
+            "created": "2017-01-20T00:00:00.000Z",
+            "definition_type": base["definition_type"],
+            "definition": base["definition"],
+        }
+    return None
+
+
+def validate_headers(headers: list[str]) -> None:
+    hl = [h.strip().lower() for h in headers]
+    missing = [h for h in REQUIRED_HEADERS if h not in hl]
+    if missing:
+        raise SystemExit(
+            f"[ERROR] CSV is missing required headers: {', '.join(missing)}\n"
+            f"Expected: {', '.join(REQUIRED_HEADERS)}"
+        )
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--csv", required=True, help="Path to campaign iocs.csv")
+    ap.add_argument("--out", required=True, help="Output STIX bundle JSON path")
+    ap.add_argument("--group", default="Kimsuky", help="Intrusion-set (group) name")
+    ap.add_argument(
+        "--campaign",
+        default="Deepfake Military ID (2025)",
+        help="Campaign descriptor to add to bundle name/desc",
+    )
+    ap.add_argument(
+        "--threat-id",
+        default=None,
+        help="Optional fixed intrusion-set STIX ID (intrusion-set--...). If omitted, a UUID will be generated.",
+    )
+    args = ap.parse_args()
+
+    csv_path = Path(args.csv)
+    out_path = Path(args.out)
+
+    if not csv_path.exists():
+        raise SystemExit(f"[ERROR] CSV not found: {csv_path}")
+
+    with csv_path.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        validate_headers(reader.fieldnames or [])
+        rows = list(reader)
+
+    now = utc_now()
+    bundle = {
+        "type": "bundle",
+        "id": f"bundle--{uuid.uuid4()}",
+        "objects": [],
+    }
+
+    # Create/collect TLP marking-definitions actually used by IOCs
+    tlps_used = set()
+    for r in rows:
+        tlp = (r.get("tlp") or "TLP:CLEAR").strip().upper()
+        if tlp in TLP_DEFS:
+            tlps_used.add(tlp)
+        elif tlp == "TLP:CLEAR":  # normalize just in case
+            tlps_used.add("TLP:CLEAR")
+        elif tlp.startswith("TLP:"):
+            # Unknown TLP color: ignore or treat as CLEAR
+            tlps_used.add("TLP:CLEAR")
+        else:
+            tlps_used.add("TLP:CLEAR")
+
+    for tlp in sorted(tlps_used):
+        md = make_marking_definition(tlp)
+        if md:
+            # Avoid duplicates (IDs are constant)
+            if not any(o for o in bundle["objects"] if o["id"] == md["id"]):
+                bundle["objects"].append(md)
+
+    # Intrusion-set (Kimsuky)
+    intrusion_set_id = (
+        args.threat_id
+        if args.threat_id and args.threat_id.startswith("intrusion-set--")
+        else f"intrusion-set--{uuid.uuid4()}"
+    )
+    intrusion_set = {
+        "type": "intrusion-set",
+        "spec_version": "2.1",
+        "id": intrusion_set_id,
+        "created": now,
+        "modified": now,
+        "name": args.group,
+        "aliases": ["Kimsuky", "Thallium", "Velvet Chollima"],  # common aliases
+        "description": f"{args.group} campaign: {args.campaign}",
+        "first_seen": None,
+        "last_seen": None,
+        "secondary_motivations": ["ideology", "organizational-gain"],
+    }
+    bundle["objects"].append(intrusion_set)
+
+    # Optional: Campaign object to tie indicators to a named operation
+    campaign_obj = {
+        "type": "campaign",
+        "spec_version": "2.1",
+        "id": f"campaign--{uuid.uuid4()}",
+        "created": now,
+        "modified": now,
+        "name": f"{args.group}: {args.campaign}",
+        "description": f"Observed spearphishing using deepfake IDs; see intrusion-set '{args.group}'.",
+    }
+    bundle["objects"].append(campaign_obj)
+
+    # Relate campaign → intrusion-set (attributed-to)
+    bundle["objects"].append(
+        {
+            "type": "relationship",
+            "spec_version": "2.1",
+            "id": f"relationship--{uuid.uuid4()}",
+            "created": now,
+            "modified": now,
+            "relationship_type": "attributed-to",
+            "source_ref": campaign_obj["id"],
+            "target_ref": intrusion_set["id"],
+        }
+    )
+
+    # Build indicators and relationships
+    for idx, r in enumerate(rows, start=1):
+        t = (r.get("type") or "").strip().lower()
+        v = (r.get("value") or "").strip()
+        if not t or not v:
+            print(f"[WARN] Row {idx}: missing type/value; skipping", file=sys.stderr)
+            continue
+        if t not in SUPPORTED_TYPES:
+            print(f"[WARN] Row {idx}: unsupported type '{t}'; skipping", file=sys.stderr)
+            continue
+
+        pattern = stix_pattern(t, v)
+        if not pattern:
+            print(f"[WARN] Row {idx}: could not create STIX pattern; skipping", file=sys.stderr)
+            continue
+
+        first_seen = to_iso_date(r.get("first_seen"))
+        last_seen = to_iso_date(r.get("last_seen"))
+        tlp = (r.get("tlp") or "TLP:CLEAR").strip().upper()
+        md = make_marking_definition(tlp) or make_marking_definition("TLP:CLEAR")
+        marking_refs = [md["id"]] if md else []
+
+        indicator_id = f"indicator--{uuid.uuid4()}"
+        indicator = {
+            "type": "indicator",
+            "spec_version": "2.1",
+            "id": indicator_id,
+            "created": now,
+            "modified": now,
+            "name": f"{t} {v}",
+            "description": (r.get("context") or "").strip() or None,
+            "pattern_type": "stix",
+            "pattern": pattern,
+            "valid_from": first_seen or now,
+            "valid_until": None,
+            "confidence": CONF_MAP.get((r.get("confidence") or "").lower().strip(), 0),
+            "labels": ["indicator-of-compromise"],
+            "object_marking_refs": marking_refs,
+            "extensions": {
+                "x_source": (r.get("source") or "").strip() or None
+            },
+        }
+        # Clean None values out of dicts
+        indicator = {k: v for k, v in indicator.items() if v is not None}
+        bundle["objects"].append(indicator)
+
+        # indicator → intrusion-set
+        bundle["objects"].append(
+            {
+                "type": "relationship",
+                "spec_version": "2.1",
+                "id": f"relationship--{uuid.uuid4()}",
+                "created": now,
+                "modified": now,
+                "relationship_type": "indicates",
+                "source_ref": indicator_id,
+                "target_ref": intrusion_set["id"],
+                "object_marking_refs": marking_refs,
+                "start_time": first_seen or now,
+                "stop_time": last_seen,
+            }
+        )
+
+        # indicator → campaign (optional link)
+        bundle["objects"].append(
+            {
+                "type": "relationship",
+                "spec_version": "2.1",
+                "id": f"relationship--{uuid.uuid4()}",
+                "created": now,
+                "modified": now,
+                "relationship_type": "indicates",
+                "source_ref": indicator_id,
+                "target_ref": campaign_obj["id"],
+                "object_marking_refs": marking_refs,
+                "start_time": first_seen or now,
+                "stop_time": last_seen,
+            }
+        )
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(bundle, indent=2))
+    print(f"[OK] Wrote STIX bundle → {out_path}")
+
+
+if __name__ == "__main__":
+    main()
