@@ -1,0 +1,6 @@
+type,value,first_seen,last_seen,tlp,source,context,confidence
+ipv4,183.111.174.34,2025-09-15,,TLP:CLEAR,AlienVault OTX,"C2 server observed in campaign",medium
+filehash-md5,09dabe5ab566e50ab4526504345af297,2025-09-15,,TLP:CLEAR,AlienVault OTX,"Malware sample (AutoIt)",medium
+domain,example-malicious.com,2025-09-15,,TLP:CLEAR,AlienVault OTX,"Phish landing page",medium
+domain,kimsuky-id-check[.]com,2025-09-16,,TLP:CLEAR,Genians,"Spearphish lure domain using fake military ID",high
+filehash-sha256,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,2025-09-16,,TLP:CLEAR,Genians,"Batch file dropper (placeholder hash)",medium
