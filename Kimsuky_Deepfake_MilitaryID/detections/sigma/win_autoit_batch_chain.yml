@@ -1,0 +1,44 @@
+title: Suspicious AutoIt or Batch Execution Chain (Kimsuky-Like)
+id: 5b9b5c1a-7c7b-4b2d-9b44-0c4b8c8af0c1
+status: experimental
+description: Detects user-executed attachments leading to AutoIt (.au3/.a3x) or batch scripting, consistent with Kimsuky deepfake lure workflows.
+references:
+  - https://attack.mitre.org/techniques/T1204/
+  - https://attack.mitre.org/techniques/T1059/
+tags:
+  - attack.t1204
+  - attack.t1059
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_autoit:
+    Image|endswith:
+      - '\autoit3.exe'
+      - '\aut2exe.exe'
+    ParentImage|endswith:
+      - '\winword.exe'
+      - '\excel.exe'
+      - '\powerpnt.exe'
+      - '\outlook.exe'
+  selection_batch:
+    Image|endswith:
+      - '\cmd.exe'
+    CommandLine|contains:
+      - '.bat '
+      - '.bat"'
+  selection_au3:
+    CommandLine|contains:
+      - '.au3'
+      - '.a3x'
+  condition: selection_autoit or (selection_batch and selection_au3)
+level: medium
+falsepositives:
+  - Software packaging tools
+  - Admin scripts
+fields:
+  - Image
+  - ParentImage
+  - CommandLine
+  - User
+  - Hashes
