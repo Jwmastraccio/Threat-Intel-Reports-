@@ -1,0 +1,15 @@
+{
+  "name": "Kimsuky – Deepfake Military ID (2025)",
+  "versions": { "attack": "14", "navigator": "4.9.1", "layer": "4.5" },
+  "domain": "enterprise-attack",
+  "description": "Spearphish lures with deepfake IDs; AutoIt/batch evasion.",
+  "techniques": [
+    {"techniqueID":"T1566.001","tactic":"initial-access","score":80,"comment":"Spearphishing attachment"},
+    {"techniqueID":"T1566.002","tactic":"initial-access","score":70,"comment":"Spearphishing link"},
+    {"techniqueID":"T1204","tactic":"execution","score":70,"comment":"User execution of lure"},
+    {"techniqueID":"T1027","tactic":"defense-evasion","score":60,"comment":"Obfuscated/packed scripts"},
+    {"techniqueID":"T1059","tactic":"execution","score":50,"comment":"Script interpreter (AutoIt/batch)"}
+  ],
+  "gradient": { "colors":["#d3d3d3","#ff0000"], "minValue":0, "maxValue":100 },
+  "layout": { "showID": false, "showAggregateScores": true }
+}
