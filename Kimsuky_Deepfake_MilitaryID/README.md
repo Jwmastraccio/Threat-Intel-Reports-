@@ -1,3 +1,5 @@
+[![TI Quality](https://github.com/Jwmastraccio/Threat-Intel-Reports-/actions/workflows/ti_quality.yml/badge.svg)](https://github.com/Jwmastraccio/Threat-Intel-Reports-/actions/workflows/ti_quality.yml)
+
 # Kimsuky – Deepfake Military ID (2025)
 
 ## Executive Summary
