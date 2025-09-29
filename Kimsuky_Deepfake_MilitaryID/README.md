@@ -23,5 +23,12 @@
 - Open `attack_navigator_layer.json` in **ATT&CK Navigator** (Import → Upload).
 - Use Sigma rules as a starting point for detection engineering (Sysmon/WEC/SIEM backends).
 
+## Campains
+- [Kimsuky Deepfake Military ID Campaign](./Kimsuky_Deepfake_MilitaryID/README.md)
+  - [IOCs (CSV)](./Kimsuky_Deepfake_MilitaryID/iocs.csv)
+  - [STIX 2.1 bundle](./Kimsuky_Deepfake_MilitaryID/stix2_bundle.json)
+  - [ATT&CK layer](./Kimsuky_Deepfake_MilitaryID/attack_navigator_layer.json)
+  - [Sigma rules](./Kimsuky_Deepfake_MilitaryID/detections/sigma/)
+
 ## Attribution Confidence
 - **Medium** — consistent with public reporting and historical Kimsuky TTPs; some indicators generalized.
