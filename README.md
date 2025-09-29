@@ -15,11 +15,11 @@ A collection of threat intel write-ups, IOC collections, and MITRE ATT&CK mappin
 - Indicators of Compromise (IOCs)  
 - Defensive recommendations
 
-This repo shows how I:
-- Pull OSINT to analyze campaigns
-- Map attacker TTPs to MITRE ATT&CK
-- Package IOCs so they can be dropped into a SIEM/EDR
-- Explain technical findings in plain English for stakeholders
+This project highlights my ability to:
+- Collect & analyze OSINT for active campaigns
+- Map attacker **TTPs -> to MITRE ATT&CK**
+- Package IOCs so they can be dropped into SIEM/EDR
+- Present fingings clearly for both analysts and non-technical stakeholders
 
 ---
 
@@ -41,11 +41,11 @@ IOCs are stored as CSVs for easy ingestion. Typical fields: Type, Value, Descrip
 
 ---
 
-## Tools / tech demonstrated
-- Suricata, Wireshark, PCAP analysis  
-- Splunk (labs), log parsing  
-- Python & Bash scripting  
-- MITRE ATT&CK mapping and detection guidance
+## Tools / Techniques
+- Suricata, Wireshark for PCAP/traffic analysis  
+- Splunk (labs) for log parsing & detection testing
+- Python & Bash scripting for enrichment/automation
+- MITRE ATT&CK for TTP mapping and heatmap visualization
 
 ---
 
