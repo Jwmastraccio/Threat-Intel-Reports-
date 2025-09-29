@@ -17,9 +17,9 @@ A collection of threat intel write-ups, IOC collections, and MITRE ATT&CK mappin
 
 This project highlights my ability to:
 - Collect & analyze OSINT for active campaigns
-- Map attacker **TTPs -> to MITRE ATT&CK**
+- Map attacker **TTPs -> MITRE ATT&CK**
 - Package IOCs so they can be dropped into SIEM/EDR
-- Present fingings clearly for both analysts and non-technical stakeholders
+- Present findings clearly for both analysts and non-technical stakeholders
 
 ---
 
