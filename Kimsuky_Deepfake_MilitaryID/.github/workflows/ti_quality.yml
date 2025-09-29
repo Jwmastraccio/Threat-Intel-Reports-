@@ -1,0 +1,47 @@
+name: TI Quality
+
+on:
+  push:
+    paths:
+      - "Kimsuky_Deepfake_MilitaryID/**"
+      - "tools/**"
+      - ".github/workflows/ti_quality.yml"
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Basic CSV header check
+        run: |
+          python - <<'PY'
+          import csv, sys
+          req = ["type","value","first_seen","last_seen","tlp","source","context","confidence"]
+          with open("Kimsuky_Deepfake_MilitaryID/iocs.csv", newline="", encoding="utf-8") as f:
+              headers = [h.lower() for h in next(csv.reader(f))]
+          missing = [h for h in req if h not in headers]
+          if missing:
+              raise SystemExit(f"Missing headers: {missing}")
+          print("Headers OK")
+          PY
+
+      - name: Generate STIX 2.1 bundle
+        run: |
+          python tools/csv_to_stix.py \
+            --csv Kimsuky_Deepfake_MilitaryID/iocs.csv \
+            --out Kimsuky_Deepfake_MilitaryID/stix2_bundle.json \
+            --group "Kimsuky" \
+            --campaign "Deepfake Military ID (2025)"
+
+      - name: Upload STIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stix-bundle
+          path: Kimsuky_Deepfake_MilitaryID/stix2_bundle.json
