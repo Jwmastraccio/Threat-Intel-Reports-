@@ -50,7 +50,7 @@ IOCs are stored as CSVs for easy ingestion. Typical fields: Type, Value, Descrip
 ---
 
 ## About me
-**Joseph Mastraccio** — entry-level cybersecurity practitioner focused on threat hunting and analysis.  
+**Joseph Mastraccio** — entry-level cybersecurity practitioner focused on threat Intelligence and analysis.  
 GitHub: https://github.com/Jwmastraccio | jwmastraccio@gmail.com
 
 ---
